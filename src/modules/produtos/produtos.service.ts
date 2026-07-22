@@ -53,4 +53,39 @@ export class ProdutosService {
             }
         })
     }
+
+    async dashboard() {
+        // agregação de produtos em estoque
+        const emEstoque = await this.prisma.produto.aggregate({
+            where: { status: 'EM_ESTOQUE' },
+            _count: { id: true },
+            _sum: { precoCompra: true },
+        })
+
+        // agregação de produtos vendidos
+        const vendidos = await this.prisma.produto.aggregate({
+            where: { status: 'VENDIDO' },
+            _count: { id: true },
+            _sum: { precoCompra: true, precoVenda: true },
+        })
+
+        const totalInvestidoEstoque = Number(emEstoque._sum.precoCompra ?? 0)
+        const totalInvestidoVendidos = Number(vendidos._sum.precoCompra ?? 0)
+        const totalVendido = Number(vendidos._sum.precoVenda ?? 0)
+        const lucroTotal = totalVendido - totalInvestidoVendidos
+
+        return {
+            resumo: {
+                totalProdutos: emEstoque._count.id + vendidos._count.id,
+                produtosEmEstoque: emEstoque._count.id,
+                produtosVendidos: vendidos._count.id,
+            },
+            financeiro: {
+                totalInvestidoEstoque: totalInvestidoEstoque.toFixed(2),
+                totalInvestidoVendidos: totalInvestidoVendidos.toFixed(2),
+                totalVendido: totalVendido.toFixed(2),
+                lucroTotal: lucroTotal.toFixed(2),
+            }
+        }
+    }
 }

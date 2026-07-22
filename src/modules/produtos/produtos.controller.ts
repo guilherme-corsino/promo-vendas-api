@@ -26,6 +26,11 @@ export class ProdutosController {
         return this.produtosService.listarTodos()
     }
 
+    @Get('dashboard/resumo')
+    dashboard() {
+        return this.produtosService.dashboard()
+    }
+
     @Get(':id')
     buscarPorId(@Param('id', ParseIntPipe) id: number) {
         return this.produtosService.buscarPorId(id)
