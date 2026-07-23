@@ -7,16 +7,19 @@ import {
     Body,
     Param,
     ParseIntPipe,
+    UseGuards,
 } from '@nestjs/common'
 import { ProdutosService } from './produtos.service'
 import { CreateProdutoDto } from './dto/create-produto.dto'
 import { UpdateProdutoDto } from './dto/update-produto.dto'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 
 @Controller('produtos')
 export class ProdutosController {
     constructor(private readonly produtosService: ProdutosService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard)
     criar(@Body() dto: CreateProdutoDto) {
         return this.produtosService.criar(dto)
     }
@@ -27,6 +30,7 @@ export class ProdutosController {
     }
 
     @Get('dashboard/resumo')
+    @UseGuards(JwtAuthGuard)
     dashboard() {
         return this.produtosService.dashboard()
     }
@@ -37,6 +41,7 @@ export class ProdutosController {
     }
 
     @Patch(':id')
+    @UseGuards(JwtAuthGuard)
     atualizar(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateProdutoDto,
@@ -45,11 +50,13 @@ export class ProdutosController {
     }
 
     @Patch(':id/vender')
+    @UseGuards(JwtAuthGuard)
     marcarComoVendido(@Param('id', ParseIntPipe) id: number) {
         return this.produtosService.marcarComoVendido(id)
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
     deletar(@Param('id', ParseIntPipe) id: number) {
         return this.produtosService.deletar(id)
     }
