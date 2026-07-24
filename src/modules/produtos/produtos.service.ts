@@ -7,18 +7,23 @@ import { UpdateProdutoDto } from './dto/update-produto.dto'
 export class ProdutosService {
     constructor(private prisma: PrismaService) { }
 
-    async criar(dto: CreateProdutoDto) {
-        return this.prisma.produto.create({ data: dto })
+    async criar(usuarioId: number, dto: CreateProdutoDto) {
+        return this.prisma.produto.create({
+            data: { ...dto, usuarioId }
+        })
     }
 
-    async listarTodos() {
+    async listarTodos(usuarioId: number) {
         return this.prisma.produto.findMany({
+            where: { usuarioId },
             orderBy: { createdAt: 'desc' }
         })
     }
 
-    async buscarPorId(id: number) {
-        const produto = await this.prisma.produto.findUnique({ where: { id } })
+    async buscarPorId(usuarioId: number, id: number) {
+        const produto = await this.prisma.produto.findFirst({
+            where: { id, usuarioId }
+        })
 
         if (!produto) {
             throw new NotFoundException('Produto não encontrado')
@@ -27,8 +32,8 @@ export class ProdutosService {
         return produto
     }
 
-    async atualizar(id: number, dto: UpdateProdutoDto) {
-        await this.buscarPorId(id) // valida que existe
+    async atualizar(usuarioId: number, id: number, dto: UpdateProdutoDto) {
+        await this.buscarPorId(usuarioId, id)
 
         return this.prisma.produto.update({
             where: { id },
@@ -36,35 +41,30 @@ export class ProdutosService {
         })
     }
 
-    async deletar(id: number) {
-        await this.buscarPorId(id) // valida que existe
+    async deletar(usuarioId: number, id: number) {
+        await this.buscarPorId(usuarioId, id)
 
         return this.prisma.produto.delete({ where: { id } })
     }
 
-    async marcarComoVendido(id: number) {
-        await this.buscarPorId(id)
+    async marcarComoVendido(usuarioId: number, id: number) {
+        await this.buscarPorId(usuarioId, id)
 
         return this.prisma.produto.update({
             where: { id },
-            data: {
-                status: 'VENDIDO',
-                vendidoEm: new Date()
-            }
+            data: { status: 'VENDIDO', vendidoEm: new Date() }
         })
     }
 
-    async dashboard() {
-        // agregação de produtos em estoque
+    async dashboard(usuarioId: number) {
         const emEstoque = await this.prisma.produto.aggregate({
-            where: { status: 'EM_ESTOQUE' },
+            where: { usuarioId, status: 'EM_ESTOQUE' },
             _count: { id: true },
             _sum: { precoCompra: true },
         })
 
-        // agregação de produtos vendidos
         const vendidos = await this.prisma.produto.aggregate({
-            where: { status: 'VENDIDO' },
+            where: { usuarioId, status: 'VENDIDO' },
             _count: { id: true },
             _sum: { precoCompra: true, precoVenda: true },
         })

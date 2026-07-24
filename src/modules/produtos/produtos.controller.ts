@@ -8,6 +8,7 @@ import {
     Param,
     ParseIntPipe,
     UseGuards,
+    Request,
 } from '@nestjs/common'
 import { ProdutosService } from './produtos.service'
 import { CreateProdutoDto } from './dto/create-produto.dto'
@@ -15,49 +16,46 @@ import { UpdateProdutoDto } from './dto/update-produto.dto'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 
 @Controller('produtos')
+@UseGuards(JwtAuthGuard)
 export class ProdutosController {
     constructor(private readonly produtosService: ProdutosService) { }
 
     @Post()
-    @UseGuards(JwtAuthGuard)
-    criar(@Body() dto: CreateProdutoDto) {
-        return this.produtosService.criar(dto)
+    criar(@Request() req, @Body() dto: CreateProdutoDto) {
+        return this.produtosService.criar(req.user.id, dto)
     }
 
     @Get()
-    listarTodos() {
-        return this.produtosService.listarTodos()
+    listarTodos(@Request() req) {
+        return this.produtosService.listarTodos(req.user.id)
     }
 
     @Get('dashboard/resumo')
-    @UseGuards(JwtAuthGuard)
-    dashboard() {
-        return this.produtosService.dashboard()
+    dashboard(@Request() req) {
+        return this.produtosService.dashboard(req.user.id)
     }
 
     @Get(':id')
-    buscarPorId(@Param('id', ParseIntPipe) id: number) {
-        return this.produtosService.buscarPorId(id)
+    buscarPorId(@Request() req, @Param('id', ParseIntPipe) id: number) {
+        return this.produtosService.buscarPorId(req.user.id, id)
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard)
     atualizar(
+        @Request() req,
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateProdutoDto,
     ) {
-        return this.produtosService.atualizar(id, dto)
+        return this.produtosService.atualizar(req.user.id, id, dto)
     }
 
     @Patch(':id/vender')
-    @UseGuards(JwtAuthGuard)
-    marcarComoVendido(@Param('id', ParseIntPipe) id: number) {
-        return this.produtosService.marcarComoVendido(id)
+    marcarComoVendido(@Request() req, @Param('id', ParseIntPipe) id: number) {
+        return this.produtosService.marcarComoVendido(req.user.id, id)
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard)
-    deletar(@Param('id', ParseIntPipe) id: number) {
-        return this.produtosService.deletar(id)
+    deletar(@Request() req, @Param('id', ParseIntPipe) id: number) {
+        return this.produtosService.deletar(req.user.id, id)
     }
 }
